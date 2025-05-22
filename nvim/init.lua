@@ -1,5 +1,15 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
+vim.opt.tabstop = 2
+vim.opt.softtabstop = 2
+vim.opt.shiftwidth = 2
+vim.opt.termguicolors = false
+-- vim.cmd.colorscheme("pywal")
+vim.opt.nu = true
+vim.opt.relativenumber = true
+vim.opt.scrolloff = 8
+vim.opt.signcolumn = "yes"
+vim.opt.colorcolumn = "80"
 
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
 if not vim.loop.fs_stat(lazypath) then
@@ -16,14 +26,25 @@ vim.opt.rtp:prepend(lazypath)
 
 require('lazy').setup({
 
+	-- Other plugins
+	{
+		'MunifTanjim/nui.nvim',
+		-- Optionally specify branch or commit if needed
+	},
+	{
+		'nvim-neo-tree/neo-tree.nvim',
+		requires = { 'MunifTanjim/nui.nvim' },
+	},
 	-- Git related plugins
 	'tpope/vim-fugitive',
 	'tpope/vim-rhubarb',
 
 	-- Shado's Own Plugins for myself
+	'echasnovski/mini.nvim', -- This includes mini.icons
 	'AlphaTechnolog/pywal.nvim',
 	'mattn/emmet-vim',
 	'lambdalisue/suda.vim',
+	'augmentcode/augment.vim',
 	'jiangmiao/auto-pairs',
 	{
 		'akinsho/flutter-tools.nvim',
@@ -43,6 +64,25 @@ require('lazy').setup({
 	{ 'akinsho/toggleterm.nvim', version = "*", config = true },
 
 	{
+		"folke/noice.nvim",
+		event = "VeryLazy",
+		opts = {
+			-- add any options here
+		},
+		dependencies = {
+			-- if you lazy-load any plugin below, make sure to add proper `module="..."` entries
+			"MunifTanjim/nui.nvim",
+			-- OPTIONAL:
+			--   `nvim-notify` is only needed, if you want to use the notification view.
+			--   If not available, we use `mini` as the fallback
+			"rcarriga/nvim-notify",
+		}
+	},
+
+	-- Shado's plugin ends here
+
+	{
+		'nvim-neotest/nvim-nio',
 		'nvim-neo-tree/neo-tree.nvim',
 		branch = "v3.x",
 		dependencies = {
@@ -76,12 +116,12 @@ require('lazy').setup({
 		'norcalli/nvim-colorizer.lua',
 		config = function()
 			require("colorizer").setup({ "css", "scss", "html", "javascript" }, {
-				RGB = true, -- #RGB hex codes
+				RGB = true,  -- #RGB hex codes
 				RRGGBB = true, -- #RRGGBB hex codes
 				RRGGBBAA = true, -- #RRGGBBAA hex codes
 				rgb_fn = true, -- CSS rgb() and rgba() functions
 				hsl_fn = true, -- CSS hsl() and hsla() functions
-				css = true, -- Enable all CSS features: rgb_fn, hsl_fn, names, RGB, RRGGBB
+				css = true,  -- Enable all CSS features: rgb_fn, hsl_fn, names, RGB, RRGGBB
 				css_fn = true, -- Enable all CSS *functions*: rgb_fn, hsl_fn
 			})
 		end,
@@ -356,17 +396,22 @@ vim.defer_fn(function()
 		-- Add languages to be installed here that you want installed for treesitter
 		ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript',
 			'vimdoc', 'vim',
-			'bash', 'lua', 'astro' },
+			'bash', 'astro' },
 
 		-- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
 		auto_install = false,
 
-		autotag = {
+		-- Highlighting
+		highlight = {
 			enable = true,
 		},
 
-		highlight = { enable = true },
-		indent = { enable = true },
+		-- Indentation
+		indent = {
+			enable = true,
+		},
+
+		-- Incremental selection
 		incremental_selection = {
 			enable = true,
 			keymaps = {
@@ -376,6 +421,8 @@ vim.defer_fn(function()
 				node_decremental = '<M-space>',
 			},
 		},
+
+		-- Text objects
 		textobjects = {
 			select = {
 				enable = true,
@@ -475,15 +522,15 @@ local on_attach = function(_, bufnr)
 end
 
 -- document existing key chains
-require('which-key').register {
-	['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
-	['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
-	['<leader>g'] = { name = '[G]it', _ = 'which_key_ignore' },
-	['<leader>h'] = { name = 'More git', _ = 'which_key_ignore' },
-	['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
-	['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
-	['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
-}
+-- require('which-key').register {
+-- 	['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
+-- 	['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
+-- 	['<leader>g'] = { name = '[G]it', _ = 'which_key_ignore' },
+-- 	['<leader>h'] = { name = 'More git', _ = 'which_key_ignore' },
+-- 	['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
+-- 	['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
+-- 	['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
+-- }
 
 -- mason-lspconfig requires that these setup functions are called in this order
 -- before setting up the servers.
@@ -503,7 +550,7 @@ local servers = {
 	gopls = {},
 	pyright = {},
 	rust_analyzer = {},
-	tsserver = {},
+	ts_ls = {},
 	html = { filetypes = { 'html', 'twig', 'hbs' } },
 	astro = {},
 	lua_ls = {
@@ -635,17 +682,6 @@ vim.keymap.set('t', '<C-k>', [[<Cmd>wincmd k<CR>]], opts)
 vim.keymap.set('t', '<C-l>', [[<Cmd>wincmd l<CR>]], opts)
 vim.keymap.set('t', '<C-w>', [[<C-\><C-n><C-w>]], opts)
 
-
-vim.opt.tabstop = 4
-vim.opt.softtabstop = 4
-vim.opt.shiftwidth = 4
-vim.opt.termguicolors = false
--- vim.cmd.colorscheme("pywal")
-vim.opt.nu = true
-vim.opt.relativenumber = true
-vim.opt.scrolloff = 8
-vim.opt.signcolumn = "yes"
-vim.opt.colorcolumn = "80"
 vim.cmd [[LushwalCompile]]
 vim.cmd [[colorscheme pywal]]
 
@@ -671,3 +707,4 @@ if vim.g.neovide then
 	vim.g.neovide_theme = "wal"
 	vim.g.neovide_scale_factor = 0.9
 end
+vim.g.augment_workspace_folders = { '~/Workspace/game-pos-next' }

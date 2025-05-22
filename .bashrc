@@ -26,8 +26,7 @@ cat ~/.cache/wal/sequences
 # To add support for TTYs this line can be optionally added.
 source ~/.cache/wal/colors-tty.sh
 
-uwufetch
-eval "$(zoxide init bash)"
+# eval "$(zoxide init bash)"
 
 # bun
 export BUN_INSTALL="$HOME/.local/share/reflex/bun"
@@ -36,3 +35,7 @@ export PATH=$BUN_INSTALL/bin:$PATH
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+## Auto run cli application
+uwufetch
+

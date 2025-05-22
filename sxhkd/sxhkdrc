@@ -8,15 +8,15 @@ super + Return
 
 # program launcher
 super + @space
-  dmen.sh
+	dmenu_run 
 
 # make sxhkd reload its configuration files:
 super + Escape
 	pkill -USR1 -x sxhkd;\
-  dunstify -t 1100 "sxhkd is reloaded"
+	dunstify -t 1100 "sxhkd is reloaded"
 
 #
-# bspwm hotkeys
+# bsrwm hotkeys
 #
 
 # quit/restart bspwm

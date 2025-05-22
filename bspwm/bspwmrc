@@ -10,17 +10,14 @@ xset -dpms & # you might don't want this it disables the screen saver
 xset r rate 190 60 s noblank & 
 xset s 0 0 &
 dunst &
-# $HOME/.config/scripts/killit.sh polybar & #change this to just 'picom &' if you didn't use the killit.sh. the script just kills the picom server every time you refresh bspwm
-
-polybar -c ${HOME}/.config/polybar/config.ini &
-
-# xcompmgr -r 2 -f 0.2,0.2 & # tryed this composor for animations cuz at that time picom was not working but now it works...
-
+picom &
+polybar &
+# ${HOME}/.config/polybar/pwidgets/launch.sh &
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
 
 #### window config ####
 bspc config border_width         2
-bspc config window_gap			 8
+bspc config window_gap					 18
 # bspc config border_radius        13
 
 bspc config split_ratio          0.5
