@@ -1,5 +1,6 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
+vim.g.loaded_matchparen = 1
 vim.opt.tabstop = 2
 vim.opt.softtabstop = 2
 vim.opt.shiftwidth = 2
@@ -43,11 +44,12 @@ require('lazy').setup({
 	'echasnovski/mini.nvim', -- This includes mini.icons
 	'AlphaTechnolog/pywal.nvim',
 	'mattn/emmet-vim',
+	'dart-lang/dart-vim-plugin',
 	'lambdalisue/suda.vim',
 	'augmentcode/augment.vim',
 	'jiangmiao/auto-pairs',
 	{
-		'akinsho/flutter-tools.nvim',
+		'nvim-flutter/flutter-tools.nvim',
 		lazy = false,
 		dependencies = {
 			'nvim-lua/plenary.nvim',
@@ -243,7 +245,17 @@ require('lazy').setup({
 	},
 
 	-- "gc" to comment visual regions/lines
-	{ 'numToStr/Comment.nvim', opts = {} },
+	{
+		'numToStr/Comment.nvim',
+		dependencies = {
+			'JoosepAlviste/nvim-ts-context-commentstring'
+		},
+		config = function()
+			require('Comment').setup {
+				pre_hook = require('ts_context_commentstring.integrations.comment_nvim').create_pre_hook()
+			}
+		end
+	},
 
 	-- Fuzzy Finder (files, lsp, etc)
 	{
@@ -269,6 +281,7 @@ require('lazy').setup({
 	{
 		-- Highlight, edit, and navigate code
 		'nvim-treesitter/nvim-treesitter',
+		lazy = false,
 		dependencies = {
 			'nvim-treesitter/nvim-treesitter-textobjects',
 			'JoosepAlviste/nvim-ts-context-commentstring',
@@ -290,6 +303,54 @@ require('lazy').setup({
 	--    For additional information see: https://github.com/folke/lazy.nvim#-structuring-your-plugins
 	-- { import = 'custom.plugins' },
 }, {})
+
+-- [[ Configure Treesitter ]]
+-- Must be called AFTER lazy.setup so nvim-treesitter is on the rtp
+vim.defer_fn(function()
+	require('nvim-treesitter.configs').setup {
+		ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript', 'vimdoc', 'vim', 'bash', 'astro' },
+		auto_install = false,
+		highlight = { enable = true },
+		indent = { enable = true },
+		incremental_selection = {
+			enable = true,
+			keymaps = {
+				init_selection = '<c-space>',
+				node_incremental = '<c-space>',
+				scope_incremental = '<c-s>',
+				node_decremental = '<M-space>',
+			},
+		},
+		textobjects = {
+			select = {
+				enable = true,
+				lookahead = true,
+				keymaps = {
+					['aa'] = '@parameter.outer',
+					['ia'] = '@parameter.inner',
+					['af'] = '@function.outer',
+					['if'] = '@function.inner',
+					['ac'] = '@class.outer',
+					['ic'] = '@class.inner',
+				},
+			},
+			move = {
+				enable = true,
+				set_jumps = true,
+				goto_next_start = { [']m'] = '@function.outer', [']]'] = '@class.outer' },
+				goto_next_end = { [']M'] = '@function.outer', [']['] = '@class.outer' },
+				goto_previous_start = { ['[m'] = '@function.outer', ['[['] = '@class.outer' },
+				goto_previous_end = { ['[M'] = '@function.outer', ['[]'] = '@class.outer' },
+			},
+			swap = {
+				enable = true,
+				swap_next = { ['<leader>a'] = '@parameter.inner' },
+				swap_previous = { ['<leader>A'] = '@parameter.inner' },
+			},
+		},
+	}
+end, 0)
+
 -- [[ Setting options ]]
 -- See `:help vim.o`
 -- NOTE: You can change these options as you wish!
@@ -391,85 +452,6 @@ vim.keymap.set('n', '<leader>sr', require('telescope.builtin').resume, { desc = 
 -- [[ Configure Treesitter ]]
 -- See `:help nvim-treesitter`
 -- Defer Treesitter setup after first render to improve startup time of 'nvim {filename}'
-vim.defer_fn(function()
-	require('nvim-treesitter.configs').setup {
-		-- Add languages to be installed here that you want installed for treesitter
-		ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript',
-			'vimdoc', 'vim',
-			'bash', 'astro' },
-
-		-- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
-		auto_install = false,
-
-		-- Highlighting
-		highlight = {
-			enable = true,
-		},
-
-		-- Indentation
-		indent = {
-			enable = true,
-		},
-
-		-- Incremental selection
-		incremental_selection = {
-			enable = true,
-			keymaps = {
-				init_selection = '<c-space>',
-				node_incremental = '<c-space>',
-				scope_incremental = '<c-s>',
-				node_decremental = '<M-space>',
-			},
-		},
-
-		-- Text objects
-		textobjects = {
-			select = {
-				enable = true,
-				lookahead = true, -- Automatically jump forward to textobj, similar to targets.vim
-				keymaps = {
-					-- You can use the capture groups defined in textobjects.scm
-					['aa'] = '@parameter.outer',
-					['ia'] = '@parameter.inner',
-					['af'] = '@function.outer',
-					['if'] = '@function.inner',
-					['ac'] = '@class.outer',
-					['ic'] = '@class.inner',
-				},
-			},
-			move = {
-				enable = true,
-				set_jumps = true, -- whether to set jumps in the jumplist
-				goto_next_start = {
-					[']m'] = '@function.outer',
-					[']]'] = '@class.outer',
-				},
-				goto_next_end = {
-					[']M'] = '@function.outer',
-					[']['] = '@class.outer',
-				},
-				goto_previous_start = {
-					['[m'] = '@function.outer',
-					['[['] = '@class.outer',
-				},
-				goto_previous_end = {
-					['[M'] = '@function.outer',
-					['[]'] = '@class.outer',
-				},
-			},
-			swap = {
-				enable = true,
-				swap_next = {
-					['<leader>a'] = '@parameter.inner',
-				},
-				swap_previous = {
-					['<leader>A'] = '@parameter.inner',
-				},
-			},
-		},
-	}
-end, 0)
-
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous diagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnostic message' })
@@ -533,18 +515,6 @@ end
 -- }
 
 -- mason-lspconfig requires that these setup functions are called in this order
--- before setting up the servers.
-require('mason').setup()
-require('mason-lspconfig').setup()
-
--- Enable the following language servers
---  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
---
---  Add any additional override configuration in the following tables. They will be passed to
---  the `settings` field of the server config. You must look up that documentation yourself.
---
---  If you want to override the default filetypes that your language server will attach to you can
---  define the property 'filetypes' to the map in question.
 local servers = {
 	clangd = {},
 	gopls = {},
@@ -560,6 +530,39 @@ local servers = {
 		},
 	},
 }
+
+-- Setup neovim lua configuration
+require('neodev').setup()
+
+-- nvim-cmp supports additional completion capabilities, so broadcast that to servers
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
+
+-- before setting up the servers.
+require('mason').setup()
+local mason_lspconfig = require("mason-lspconfig")
+mason_lspconfig.setup({
+	ensure_installed = vim.tbl_keys(servers),
+})
+
+for server_name, server_opts in pairs(servers) do
+	vim.lsp.config(server_name, {
+		capabilities = capabilities,
+		on_attach = on_attach,
+		settings = server_opts,
+		filetypes = server_opts.filetypes,
+	})
+	vim.lsp.enable(server_name)
+end
+
+-- Enable the following language servers
+--  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
+--
+--  Add any additional override configuration in the following tables. They will be passed to
+--  the `settings` field of the server config. You must look up that documentation yourself.
+--
+--  If you want to override the default filetypes that your language server will attach to you can
+--  define the property 'filetypes' to the map in question.
 
 -- -- local lsp_config = require('lspconfig');
 --
@@ -589,30 +592,17 @@ local servers = {
 -- -- 	},
 -- -- })
 
--- Setup neovim lua configuration
-require('neodev').setup()
 
--- nvim-cmp supports additional completion capabilities, so broadcast that to servers
-local capabilities = vim.lsp.protocol.make_client_capabilities()
-capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
-
--- Ensure the servers above are installed
-local mason_lspconfig = require 'mason-lspconfig'
-
-mason_lspconfig.setup {
-	ensure_installed = vim.tbl_keys(servers),
-}
-
-mason_lspconfig.setup_handlers {
-	function(server_name)
-		require('lspconfig')[server_name].setup {
-			capabilities = capabilities,
-			on_attach = on_attach,
-			settings = servers[server_name],
-			filetypes = (servers[server_name] or {}).filetypes,
-		}
-	end,
-}
+-- mason_lspconfig.setup_handlers {
+-- 	function(server_name)
+-- 		require('lspconfig')[server_name].setup {
+-- 			capabilities = capabilities,
+-- 			on_attach = on_attach,
+-- 			settings = servers[server_name],
+-- 			filetypes = (servers[server_name] or {}).filetypes,
+-- 		}
+-- 	end,
+-- }
 
 -- [[ Configure nvim-cmp ]]
 -- See `:help cmp`
@@ -665,7 +655,34 @@ cmp.setup {
 
 require('custom.plugins')
 
-require("flutter-tools").setup {} -- use defaults
+require("flutter-tools").setup {
+	ui = {
+		border = "rounded",
+	},
+
+	decorations = {
+		statusline = {
+			device = true,
+			app_version = true,
+		},
+	},
+
+	widget_guides = {
+		enabled = true,
+	},
+
+	lsp = {
+		on_attach = on_attach,     -- use your existing on_attach
+		capabilities = capabilities, -- use your existing capabilities
+		settings = {
+			dart = {
+				completeFunctionCalls = true,
+				showTodos = true,
+				enableSdkFormatter = true,
+			},
+		},
+	},
+}
 
 require('toggleterm').setup {}
 
@@ -673,7 +690,17 @@ require("lushwal").add_reload_hook(hook)
 
 require("bufferline").setup()
 
+vim.cmd [[LushwalCompile]]
+vim.cmd [[colorscheme pywal]]
+
+-- ─── dart-vim-plugin ───────────────────────────
+vim.g.dart_format_on_save = 1
+vim.g.dart_style_guide = 2
+vim.g.dart_trailing_comma_indent = true
+
 local opts = { buffer = 0 }
+
+-- ─── Shados Key Bindings ───────────────────────────
 vim.keymap.set('t', '<esc>', [[<C-\><C-n>]], opts)
 vim.keymap.set('t', 'jk', [[<C-\><C-n>]], opts)
 vim.keymap.set('t', '<C-h>', [[<Cmd>wincmd h<CR>]], opts)
@@ -681,22 +708,26 @@ vim.keymap.set('t', '<C-j>', [[<Cmd>wincmd j<CR>]], opts)
 vim.keymap.set('t', '<C-k>', [[<Cmd>wincmd k<CR>]], opts)
 vim.keymap.set('t', '<C-l>', [[<Cmd>wincmd l<CR>]], opts)
 vim.keymap.set('t', '<C-w>', [[<C-\><C-n><C-w>]], opts)
-
-vim.cmd [[LushwalCompile]]
-vim.cmd [[colorscheme pywal]]
-
 vim.keymap.set("n", "<leader>e", "<cmd>:Neotree toggle<CR>")
 vim.keymap.set("n", "<leader><S-e>", vim.cmd.Ex)
 vim.keymap.set("n", "<leader>o", "<cmd>:Neotree focus<CR>")
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
-
 vim.keymap.set("n", "<C-l>", "<cmd>bnext<CR>")
 vim.keymap.set("n", "<C-h>", "<cmd>bprevious<CR>")
 vim.keymap.set("n", "<C-c>", "<cmd>bd<CR>")
+vim.keymap.set("n", "<A-t>", "<cmd>:ToggleTerm direction=horizontal<CR>")
+-- vim.keymap.set("n", "<A-f>", "<cmd>:ToggleTerm direction=float<CR>")
 
-vim.keymap.set("n", "<A-3>", "<cmd>:ToggleTerm<CR>")
-vim.keymap.set("n", "<A-f>", "<cmd>:ToggleTerm direction=float<CR>")
+-- ─── Flutter Keymaps (<C-f> prefix) ────────────
+vim.keymap.set("n", "<C-f>r", "<cmd>FlutterReload<CR>", { desc = "Flutter Reload" })
+vim.keymap.set("n", "<C-f>R", "<cmd>FlutterRestart<CR>", { desc = "Flutter Restart" })
+vim.keymap.set("n", "<C-f>s", "<cmd>FlutterRun<CR>", { desc = "Flutter Run (Start)" })
+vim.keymap.set("n", "<C-f>q", "<cmd>FlutterQuit<CR>", { desc = "Flutter Quit" })
+vim.keymap.set("n", "<C-f>d", "<cmd>FlutterDevices<CR>", { desc = "Flutter Devices" })
+vim.keymap.set("n", "<C-f>l", "<cmd>FlutterLogToggle<CR>", { desc = "Flutter Logs Toggle" })
+vim.keymap.set("n", "<C-f>p", "<cmd>FlutterPubGet<CR>", { desc = "Flutter Pub Get" })
+vim.keymap.set("n", "<C-f>e", "<cmd>FlutterEmulators<CR>", { desc = "Flutter Emulators" })
 
 -- Neovide / GUI Configuration
 
