@@ -6,11 +6,16 @@ vim.opt.softtabstop = 2
 vim.opt.shiftwidth = 2
 vim.opt.termguicolors = false
 -- vim.cmd.colorscheme("pywal")
+local site_path = vim.fn.stdpath('data') .. '/site'
+vim.fn.mkdir(site_path, 'p')
+vim.opt.runtimepath:prepend(site_path)
+
 vim.opt.nu = true
 vim.opt.relativenumber = true
 vim.opt.scrolloff = 8
 vim.opt.signcolumn = "yes"
 vim.opt.colorcolumn = "80"
+
 
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
 if not vim.loop.fs_stat(lazypath) then
@@ -279,15 +284,69 @@ require('lazy').setup({
 	},
 
 	{
-		-- Highlight, edit, and navigate code
 		'nvim-treesitter/nvim-treesitter',
 		lazy = false,
+		build = ':TSUpdate',
+		config = function()
+			require('nvim-treesitter.configs').setup {
+				ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript', 'vimdoc', 'vim', 'bash', 'astro', 'dart' },
+				auto_install = false,
+				highlight = { enable = true },
+				indent = { enable = true },
+				incremental_selection = {
+					enable = true,
+					keymaps = {
+						init_selection = '<c-space>',
+						node_incremental = '<c-space>',
+						scope_incremental = '<c-s>',
+						node_decremental = '<M-space>',
+					},
+				},
+				textobjects = {
+					select = {
+						enable = true,
+						lookahead = true,
+						keymaps = {
+							['aa'] = '@parameter.outer',
+							['ia'] = '@parameter.inner',
+							['af'] = '@function.outer',
+							['if'] = '@function.inner',
+							['ac'] = '@class.outer',
+							['ic'] = '@class.inner',
+						},
+					},
+					move = {
+						enable = true,
+						set_jumps = true,
+						goto_next_start = { [']m'] = '@function.outer', [']]'] = '@class.outer' },
+						goto_next_end = { [']M'] = '@function.outer', [']['] = '@class.outer' },
+						goto_previous_start = { ['[m'] = '@function.outer', ['[['] = '@class.outer' },
+						goto_previous_end = { ['[M'] = '@function.outer', ['[]'] = '@class.outer' },
+					},
+					swap = {
+						enable = true,
+						swap_next = { ['<leader>a'] = '@parameter.inner' },
+						swap_previous = { ['<leader>A'] = '@parameter.inner' },
+					},
+				},
+			}
+		end,
 		dependencies = {
 			'nvim-treesitter/nvim-treesitter-textobjects',
 			'JoosepAlviste/nvim-ts-context-commentstring',
 		},
-		build = ':TSUpdate',
 	},
+
+	-- {
+	-- 	-- Highlight, edit, and navigate code
+	-- 	'nvim-treesitter/nvim-treesitter',
+	-- 	lazy = false,
+	-- 	dependencies = {
+	-- 		'nvim-treesitter/nvim-treesitter-textobjects',
+	-- 		'JoosepAlviste/nvim-ts-context-commentstring',
+	-- 	},
+	-- 	build = ':TSUpdate',
+	-- },
 
 	-- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
 	--       These are some example plugins that I've included in the kickstart repository.
@@ -306,50 +365,66 @@ require('lazy').setup({
 
 -- [[ Configure Treesitter ]]
 -- Must be called AFTER lazy.setup so nvim-treesitter is on the rtp
-vim.defer_fn(function()
-	require('nvim-treesitter.configs').setup {
-		ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript', 'vimdoc', 'vim', 'bash', 'astro' },
-		auto_install = false,
-		highlight = { enable = true },
-		indent = { enable = true },
-		incremental_selection = {
-			enable = true,
-			keymaps = {
-				init_selection = '<c-space>',
-				node_incremental = '<c-space>',
-				scope_incremental = '<c-s>',
-				node_decremental = '<M-space>',
-			},
-		},
-		textobjects = {
-			select = {
-				enable = true,
-				lookahead = true,
-				keymaps = {
-					['aa'] = '@parameter.outer',
-					['ia'] = '@parameter.inner',
-					['af'] = '@function.outer',
-					['if'] = '@function.inner',
-					['ac'] = '@class.outer',
-					['ic'] = '@class.inner',
-				},
-			},
-			move = {
-				enable = true,
-				set_jumps = true,
-				goto_next_start = { [']m'] = '@function.outer', [']]'] = '@class.outer' },
-				goto_next_end = { [']M'] = '@function.outer', [']['] = '@class.outer' },
-				goto_previous_start = { ['[m'] = '@function.outer', ['[['] = '@class.outer' },
-				goto_previous_end = { ['[M'] = '@function.outer', ['[]'] = '@class.outer' },
-			},
-			swap = {
-				enable = true,
-				swap_next = { ['<leader>a'] = '@parameter.inner' },
-				swap_previous = { ['<leader>A'] = '@parameter.inner' },
-			},
-		},
-	}
-end, 0)
+
+-- vim.defer_fn(function()
+-- 	local ok, configs = pcall(require, 'nvim-treesitter.configs')
+-- 	if not ok then
+-- 		vim.notify("Failed to load nvim-treesitter.configs: " .. configs, vim.log.levels.ERROR)
+-- 		return
+-- 	end
+--
+-- 	local setup_ok, err = pcall(function()
+-- 		configs.setup {
+-- 			ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript', 'vimdoc', 'vim', 'bash', 'astro' },
+-- 			auto_install = false,
+-- 			highlight = { enable = true },
+-- 			indent = { enable = true },
+-- 			incremental_selection = {
+-- 				enable = true,
+-- 				keymaps = {
+-- 					init_selection = '<c-space>',
+-- 					node_incremental = '<c-space>',
+-- 					scope_incremental = '<c-s>',
+-- 					node_decremental = '<M-space>',
+-- 				},
+-- 			},
+-- 			textobjects = {
+-- 				select = {
+-- 					enable = true,
+-- 					lookahead = true,
+-- 					keymaps = {
+-- 						['aa'] = '@parameter.outer',
+-- 						['ia'] = '@parameter.inner',
+-- 						['af'] = '@function.outer',
+-- 						['if'] = '@function.inner',
+-- 						['ac'] = '@class.outer',
+-- 						['ic'] = '@class.inner',
+-- 					},
+-- 				},
+-- 				move = {
+-- 					enable = true,
+-- 					set_jumps = true,
+-- 					goto_next_start = { [']m'] = '@function.outer', [']]'] = '@class.outer' },
+-- 					goto_next_end = { [']M'] = '@function.outer', [']['] = '@class.outer' },
+-- 					goto_previous_start = { ['[m'] = '@function.outer', ['[['] = '@class.outer' },
+-- 					goto_previous_end = { ['[M'] = '@function.outer', ['[]'] = '@class.outer' },
+-- 				},
+-- 				swap = {
+-- 					enable = true,
+-- 					swap_next = { ['<leader>a'] = '@parameter.inner' },
+-- 					swap_previous = { ['<leader>A'] = '@parameter.inner' },
+-- 				},
+-- 			},
+-- 		}
+-- 	end)
+--
+-- 	if not setup_ok then
+-- 		vim.notify("Failed to setup nvim-treesitter: " .. err, vim.log.levels.ERROR)
+-- 		return
+-- 	end
+--
+-- 	vim.notify("nvim-treesitter configured successfully", vim.log.levels.INFO)
+-- end, 100)
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
